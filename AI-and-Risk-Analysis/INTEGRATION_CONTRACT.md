@@ -174,7 +174,7 @@ Run the current Member 3 test suite from the repository root:
 py -m unittest discover -s .\AI-and-Risk-Analysis -p "test_*.py" -v
 ```
 
-The current suite contains 10 automated tests.
+The current suite contains 12 automated tests.
 
 ## 8. Current Limitations
 
