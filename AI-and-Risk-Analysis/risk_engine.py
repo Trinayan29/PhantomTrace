@@ -12,6 +12,36 @@ from typing import Any
 def score_finding(finding: dict[str, Any]) -> dict[str, Any]:
     """Calculate a risk score from 0 to 100 for one security finding."""
 
+    if not isinstance(finding, dict):
+        raise TypeError("finding must be a dictionary")
+    # Validate individual input fields
+
+    string_fields = [
+        "employment_status",
+        "privilege_level",
+        "resource_sensitivity",
+    ]
+
+    for field in string_fields:
+        if field in finding and not isinstance(finding[field], str):
+            raise TypeError(f"{field} must be a string")
+
+    boolean_fields = ["account_active", "owner_known"]
+
+    for field in boolean_fields:
+        if field in finding and not isinstance(finding[field], bool):
+            raise TypeError(f"{field} must be a boolean")
+
+    suspicious_activity = finding.get("suspicious_activity", False)
+
+    if not isinstance(suspicious_activity, bool) and not (
+        isinstance(suspicious_activity, list)
+        and all(isinstance(item, str) for item in suspicious_activity)
+    ):
+        raise TypeError(
+            "suspicious_activity must be a boolean or a list of strings"
+        )
+
     evidence: list[dict[str, Any]] = []
     recommendations: list[str] = []
 

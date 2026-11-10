@@ -140,6 +140,20 @@ Suggested JSON request:
 
 For this example, the current risk engine should return a score of 85 and a `Critical` risk level.
 
+## 5.1 Input Validation
+
+The risk engine validates incoming finding data before calculating risk scores.
+
+Validation rules:
+- The finding must be a Python dictionary.
+- `employment_status`, `privilege_level`, and `resource_sensitivity` must be strings when supplied.
+- `account_active` and `owner_known` must be Boolean values when supplied.
+- `suspicious_activity` must be a Boolean or a list containing only strings.
+
+Invalid data types raise a TypeError.
+
+The backend should validate incoming API requests and handle validation errors appropriately before returning responses to the frontend.
+
 ## 6. Integration Requirements
 
 - Reuse `risk_engine.py`; do not duplicate its scoring rules in the backend.

@@ -64,7 +64,28 @@ class RiskEngineTests(unittest.TestCase):
                 for item in result["evidence"]
             )
         )
+    def test_invalid_input_raises_type_error(self):
+        invalid_inputs = [None, [], "invalid"]
 
+        for finding in invalid_inputs:
+            with self.subTest(finding=finding):
+                with self.assertRaises(TypeError):
+                    score_finding(finding)    
 
+    def test_invalid_field_types_raise_type_error(self):
+        invalid_findings = [
+            {"employment_status": 123},
+            {"privilege_level": 25},
+            {"account_active": "yes"},
+            {"owner_known": "false"},
+            {"suspicious_activity": ["failed_login", 123]},
+            {"suspicious_activity": "failed_login"},
+        ]
+
+        for finding in invalid_findings:
+            with self.subTest(finding=finding):
+                with self.assertRaises(TypeError):
+                    score_finding(finding)
+                    
 if __name__ == "__main__":
     unittest.main()

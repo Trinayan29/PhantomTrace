@@ -57,7 +57,12 @@ Run all tests from the repository root using PowerShell:
 py -m unittest discover -s .\AI-and-Risk-Analysis -p "test_*.py" -v
 ```
 
-Current status: 10 automated tests passed.
+Current status: 12 automated tests passed.
+
+Input validation:
+- Rejects non-dictionary findings.
+- Validates string and Boolean fields.
+- Validates suspicious-activity data formats.
 
 ### 4. Integration Notes
 
