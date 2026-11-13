@@ -16,6 +16,9 @@ from .serializers import (
     OrganizationCreateSerializer,
     OrganizationUpdateSerializer,
     OrganizationMemberCreateSerializer,
+    OrganizationResponseSerializer,
+    OrganizationMemberResponseSerializer,
+    MessageResponseSerializer,
 )
 
 
@@ -23,8 +26,10 @@ class OrganizationListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        operation_id="list_accessible_organizations",
         summary="List accessible organizations",
         description="Returns organizations within the authenticated user's access scope.",
+        responses={200: OrganizationResponseSerializer(many=True)},
     )
     def get(self, request):
         try:
@@ -51,6 +56,7 @@ class OrganizationListCreateView(APIView):
 
     @extend_schema(
         request=OrganizationCreateSerializer,
+        responses={201: OrganizationResponseSerializer},
         summary="Create an organization",
     )
     def post(self, request):
@@ -98,6 +104,8 @@ class OrganizationDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        operation_id="retrieve_organization",
+        responses={200: OrganizationResponseSerializer},
         summary="Retrieve an organization",
     )
     def get(self, request, organization_id):
@@ -132,6 +140,7 @@ class OrganizationDetailView(APIView):
 
     @extend_schema(
         request=OrganizationUpdateSerializer,
+        responses={200: OrganizationResponseSerializer},
         summary="Update an organization",
     )
     def patch(self, request, organization_id):
@@ -177,6 +186,7 @@ class OrganizationDetailView(APIView):
             )
 
     @extend_schema(
+        responses={200: MessageResponseSerializer},
         summary="Deactivate an organization",
     )
     def delete(self, request, organization_id):
@@ -215,6 +225,7 @@ class OrganizationMemberCreateView(APIView):
 
     @extend_schema(
         request=OrganizationMemberCreateSerializer,
+        responses={201: OrganizationMemberResponseSerializer},
         summary="Add a member to an organization",
     )
     def post(self, request, organization_id):
@@ -263,6 +274,7 @@ class OrganizationMembersView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        responses={200: OrganizationMemberResponseSerializer(many=True)},
         summary="List organization members",
     )
     def get(self, request, organization_id):
@@ -297,6 +309,7 @@ class OrganizationMembersView(APIView):
 
     @extend_schema(
         request=OrganizationMemberCreateSerializer,
+        responses={201: OrganizationMemberResponseSerializer},
         summary="Add a member to an organization",
     )
     def post(self, request, organization_id):
@@ -347,6 +360,7 @@ class OrganizationMemberDetailView(APIView):
 
     @extend_schema(
         request=OrganizationMemberCreateSerializer,
+        responses={200: OrganizationMemberResponseSerializer},
         summary="Change an organization member's role",
     )
     def patch(self, request, organization_id, member_user_id):
@@ -395,6 +409,7 @@ class OrganizationMemberDetailView(APIView):
             )
 
     @extend_schema(
+        responses={200: MessageResponseSerializer},
         summary="Deactivate an organization membership",
     )
     def delete(self, request, organization_id, member_user_id):

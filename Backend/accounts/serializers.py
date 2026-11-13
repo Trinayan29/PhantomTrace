@@ -1,7 +1,6 @@
 
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-
 from services.mongodb import get_database
 
 
@@ -44,6 +43,16 @@ class RegistrationSerializer(serializers.Serializer):
             })
 
         return data
+
+class LoginSerializer(serializers.Serializer):
+    identifier = serializers.CharField(
+        trim_whitespace=True
+    )
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False
+    )
+
 
 class RefreshTokenSerializer(serializers.Serializer):
     refresh = serializers.CharField(

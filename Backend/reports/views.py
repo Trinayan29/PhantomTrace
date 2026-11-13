@@ -12,9 +12,18 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiResponse,
+    OpenApiTypes,
+)
 
 from . import services
+from .serializers import (
+    ReportFindingsResponseSerializer,
+    ReportSummaryResponseSerializer,
+    RemediationReportResponseSerializer,
+)
 
 
 def get_report_filters(request):
@@ -55,7 +64,11 @@ def handle_report_error(exc):
 class ReportFindingsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="List security findings")
+    @extend_schema(
+        operation_id="get_security_report_summary",
+        responses={200: ReportSummaryResponseSerializer},
+        summary="Get security report summary",
+    )
     def get(self, request):
         try:
             result = services.list_findings(
@@ -70,7 +83,11 @@ class ReportFindingsView(APIView):
 class ReportSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Get security report summary")
+    @extend_schema(
+        operation_id="list_security_findings",
+        responses={200: ReportFindingsResponseSerializer},
+        summary="List security findings",
+    )
     def get(self, request):
         try:
             result = services.get_report_summary(
@@ -85,7 +102,11 @@ class ReportSummaryView(APIView):
 class RemediationReportView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="List remediation actions")
+    @extend_schema(
+        operation_id="list_remediation_actions",
+        responses={200: RemediationReportResponseSerializer},
+        summary="List remediation actions",
+    )
     def get(self, request):
         try:
             result = services.list_remediation_actions(
@@ -100,7 +121,16 @@ class RemediationReportView(APIView):
 class ReportExportCSVView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Export security findings as CSV")
+    @extend_schema(
+        operation_id="export_security_findings_csv",
+        responses={
+            (200, "text/csv"): OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description="Downloadable CSV report.",
+            )
+        },
+        summary="Export security findings as CSV",
+    )
     def get(self, request):
         try:
             findings = services.get_export_findings(
@@ -146,7 +176,16 @@ class ReportExportCSVView(APIView):
 class ReportExportPDFView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Export security findings as PDF")
+    @extend_schema(
+        operation_id="export_security_findings_pdf",
+        responses={
+            (200, "application/pdf"): OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description="Downloadable PDF report.",
+            )
+        },
+        summary="Export security findings as PDF",
+    )
     def get(self, request):
         try:
             findings = services.get_export_findings(

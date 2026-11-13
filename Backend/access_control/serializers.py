@@ -87,3 +87,6 @@ class OrganizationMemberResponseSerializer(serializers.Serializer):
     organization_id = serializers.CharField()
     role = serializers.CharField()
     is_active = serializers.BooleanField()
+
+class MessageResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
