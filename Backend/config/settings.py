@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'risk_analysis',
     'findings',
     'reports',
+    "detection",
 ]
 
 

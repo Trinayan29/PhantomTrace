@@ -1,67 +1,89 @@
-import type { AuthResponse, LoginPayload, RegisterPayload, TokenPair, User } from "./types";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
-const REFRESH_KEY = "pt-refresh";
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    cache: "no-store",
+  });
 
-let accessToken: string | null = null; // kept in memory only
-export const tokenStore = {
-  get access() { return accessToken; },
-  set access(v: string | null) { accessToken = v; },
-  get refresh() { return localStorage.getItem(REFRESH_KEY); },
-  set refresh(v: string | null) { v ? localStorage.setItem(REFRESH_KEY, v) : localStorage.removeItem(REFRESH_KEY); },
-  clear() { accessToken = null; localStorage.removeItem(REFRESH_KEY); },
-};
+  const data = await response.json().catch(() => ({}));
 
-export class ApiError extends Error {
-  constructor(public status: number, message: string, public fields: Record<string, string> = {}) { super(message); }
-}
-
-async function parseError(res: Response): Promise<ApiError> {
-  let body: any = null;
-  try { body = await res.json(); } catch { /* empty */ }
-  const fields: Record<string, string> = {};
-  if (body && typeof body === "object") {
-    for (const [k, v] of Object.entries(body)) {
-      if (k !== "detail") fields[k] = Array.isArray(v) ? String(v[0]) : String(v);
-    }
+  if (!response.ok) {
+    throw new Error(data.error || data.detail || `API error ${response.status}`);
   }
-  return new ApiError(res.status, body?.detail ?? "Something went wrong. Try again.", fields);
+
+  return data as T;
 }
 
-async function raw(path: string, init: RequestInit = {}, auth = true): Promise<Response> {
-  const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
-  if (auth && accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  return fetch(`${BASE}${path}`, { ...init, headers });
-}
-
-let refreshing: Promise<boolean> | null = null;
-export function refreshSession(): Promise<boolean> {
-  if (refreshing) return refreshing; // de-duplicate parallel 401s
-  refreshing = (async () => {
-    const refresh = tokenStore.refresh;
-    if (!refresh) return false;
-    const res = await raw("/api/auth/refresh/", { method: "POST", body: JSON.stringify({ refresh }) }, false);
-    if (!res.ok) { tokenStore.clear(); return false; }
-    const data = (await res.json()) as Partial<TokenPair>;
-    tokenStore.access = data.access ?? null;
-    if (data.refresh) tokenStore.refresh = data.refresh; // if backend rotates refresh tokens
-    return !!data.access;
-  })().finally(() => { refreshing = null; });
-  return refreshing;
-}
-
-async function request<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
-  let res = await raw(path, init, auth);
-  if (res.status === 401 && auth && (await refreshSession())) res = await raw(path, init, auth);
-  if (!res.ok) throw await parseError(res);
-  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
-}
-
-// Endpoints (ASSUMED paths - confirm with backend)
 export const api = {
-  register: (p: RegisterPayload) => request<AuthResponse>("/api/auth/register/", { method: "POST", body: JSON.stringify(p) }, false),
-  login: (p: LoginPayload) => request<AuthResponse>("/api/auth/login/", { method: "POST", body: JSON.stringify(p) }, false),
-  logout: () => request<void>("/api/auth/logout/", { method: "POST", body: JSON.stringify({ refresh: tokenStore.refresh }) }),
-  profile: () => request<User>("/api/auth/profile/"),
+  login: (identifier: string, password: string) =>
+    request<any>("/api/v1/auth/login/", {
+      method: "POST",
+      body: JSON.stringify({ identifier, password }),
+    }),
+
+  register: (data: {
+    full_name: string;
+    username: string;
+    email: string;
+    password: string;
+    confirm_password: string;
+  }) =>
+    request<any>("/api/v1/auth/register/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  me: (token: string) =>
+    request<any>("/api/v1/auth/me/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  applications: (token: string) =>
+    request<any>("/api/v1/applications/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  graph: (token: string) =>
+    request<any>("/api/v1/graph/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  detection: (token: string) =>
+    request<any>("/api/v1/detection/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  submitDetection: (token: string, data: any) =>
+    request<any>("/api/v1/detection/", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
+
+  findings: (token: string) =>
+    request<any>("/api/v1/reports/findings/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  reportSummary: (token: string) =>
+    request<any>("/api/v1/reports/summary/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  remediation: (token: string) =>
+    request<any>("/api/v1/reports/remediation/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  evaluateRisk: (token: string, data: any) =>
+    request<any>("/api/v1/risk-analysis/evaluate/", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
 };
